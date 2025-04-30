@@ -1,13 +1,14 @@
 ---
 title: "Final Project"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 date: "2025-04-25"
 ---
 
 ```{r}
 library(tidyverse) 
-
-NHANES2 <- NHANES2_1_1_
+NHANES2 <- read.csv("NHANES2-1 (1).csv")
 ```
 
 
@@ -29,6 +30,26 @@ d <- d %>%
                        include.lowest = T)) 
 dim(d)
 
+```
+
+```{r}
+if (!require("tableone")) {
+  install.packages("tableone")
+}
+library(tableone)
+
+
+vars <- c("AGEYRS", "SEX", "RACE", "MARRY", "BMI", "GRADES", "AVGSMK", "SIZE")
+catVars <- c("SEX", "RACE", "MARRY", "GRADES", "SIZE")  
+
+#Table 1
+table1 <- CreateTableOne(vars = vars, 
+                         data = d, 
+                         strata = "BOOZE_q",  
+                         factorVars = catVars)
+
+
+print(table1, showAllLevels = TRUE)
 ```
 
 
