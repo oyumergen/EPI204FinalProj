@@ -81,27 +81,30 @@ print(table1, showAllLevels = TRUE)
 ```
 
 ```{r}
-d <- d %>%
-  mutate(
-    BOOZE_q = as.factor(BOOZE_q),
-    SEX = as.factor(SEX),
-    RACE = as.factor(RACE),
-    MARRY = as.factor(MARRY),
-    SIZE = factor(SIZE),
-    entry = (EXAM_YR * 12) + EXAM_MO,
-    exit = (LAST_YR * 12) + LAST_MO + (LAST_DAY/30),
-    FU = exit - entry
-  )
-
-cox_test <- coxph(Surv(FU, DEATH) ~ BOOZE_q, data = d)
-summary(cox_test)
-
-d <- d %>%
-  filter(complete.cases(BOOZE_q, SEX, AGEYRS, RACE, GRADES, MARRY, BMI, AVGSMK, SIZE, FU, DEATH))
+#Create follow-up time
+d$start <- d$EXAM_YR + d$EXAM_MO / 12
 
 
-cox <- coxph(Surv(FU, DEATH) ~ BOOZE_q + SEX + RACE + GRADES + MARRY + BMI + 
+d$end <- ifelse(d$DEATH == 1,
+                      d$DIE_YR + d$DIE_MO / 12,
+                      d$LAST_YR + d$LAST_MO / 12)
+
+d$FU <- d$end - d$start
+
+#Adjusted Cox regression with SEX
+cox <- coxph(Surv(FU, DEATH) ~ as.factor(BOOZE_q) + SEX + 
+               as.factor(RACE) + as.factor(GRADES) + as.factor(MARRY) + BMI + 
                AVGSMK + SIZE, data = d, ties='efron')
 summary(cox)
+cox.zph(cox)
+plot(cox.zph(cox))
+
+#Product term with SEX Cox regression
+cox_product <- coxph(Surv(FU, DEATH) ~ as.factor(BOOZE_q)*SEX + 
+                     as.factor(RACE) + as.factor(GRADES) + as.factor(MARRY) + 
+                     BMI + AVGSMK + SIZE, data = d, ties = "efron")
+summary(cox_product)
+cox.zph(cox_product)
+plot(cox.zph(cox_product))
 ```
 
