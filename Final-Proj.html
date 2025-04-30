@@ -355,25 +355,78 @@ display: none;
 </div>
 
 
-<pre class="r"><code>library(tidyverse) </code></pre>
+<pre class="r"><code>if (!require(&quot;dplyr&quot;)) install.packages(&quot;dplyr&quot;)</code></pre>
+<pre><code>## Loading required package: dplyr</code></pre>
+<pre><code>## 
+## Attaching package: &#39;dplyr&#39;</code></pre>
+<pre><code>## The following objects are masked from &#39;package:stats&#39;:
+## 
+##     filter, lag</code></pre>
+<pre><code>## The following objects are masked from &#39;package:base&#39;:
+## 
+##     intersect, setdiff, setequal, union</code></pre>
+<pre class="r"><code>if (!require(&quot;skimr&quot;)) install.packages(&quot;skimr&quot;)</code></pre>
+<pre><code>## Loading required package: skimr</code></pre>
+<pre class="r"><code>if (!require(&quot;tidyr&quot;)) install.packages(&quot;tidyr&quot;)</code></pre>
+<pre><code>## Loading required package: tidyr</code></pre>
+<pre class="r"><code>if (!require(&quot;survival&quot;)) install.packages(&quot;survival&quot;)</code></pre>
+<pre><code>## Loading required package: survival</code></pre>
+<pre class="r"><code>if (!require(&quot;survminer&quot;)) install.packages(&quot;survminer&quot;)</code></pre>
+<pre><code>## Loading required package: survminer</code></pre>
+<pre><code>## Loading required package: ggplot2</code></pre>
+<pre><code>## Loading required package: ggpubr</code></pre>
+<pre><code>## 
+## Attaching package: &#39;survminer&#39;</code></pre>
+<pre><code>## The following object is masked from &#39;package:survival&#39;:
+## 
+##     myeloma</code></pre>
+<pre class="r"><code>if (!require(&quot;haven&quot;)) install.packages(&quot;haven&quot;)</code></pre>
+<pre><code>## Loading required package: haven</code></pre>
+<pre class="r"><code>if (!require(&quot;broom&quot;)) install.packages(&quot;broom&quot;)</code></pre>
+<pre><code>## Loading required package: broom</code></pre>
+<pre class="r"><code>if (!require(&quot;rms&quot;)) install.packages(&quot;rms&quot;)</code></pre>
+<pre><code>## Loading required package: rms</code></pre>
+<pre><code>## Loading required package: Hmisc</code></pre>
+<pre><code>## 
+## Attaching package: &#39;Hmisc&#39;</code></pre>
+<pre><code>## The following objects are masked from &#39;package:dplyr&#39;:
+## 
+##     src, summarize</code></pre>
+<pre><code>## The following objects are masked from &#39;package:base&#39;:
+## 
+##     format.pval, units</code></pre>
+<pre class="r"><code>if (!require(&quot;tidyverse&quot;)) install.packages(&quot;tidyverse&quot;)</code></pre>
+<pre><code>## Loading required package: tidyverse</code></pre>
 <pre><code>## ── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
-## ✔ dplyr     1.1.4     ✔ readr     2.1.5
-## ✔ forcats   1.0.0     ✔ stringr   1.5.1
-## ✔ ggplot2   3.5.2     ✔ tibble    3.2.1
-## ✔ lubridate 1.9.4     ✔ tidyr     1.3.1
-## ✔ purrr     1.0.4     
+## ✔ forcats   1.0.0     ✔ readr     2.1.5
+## ✔ lubridate 1.9.4     ✔ stringr   1.5.1
+## ✔ purrr     1.0.4     ✔ tibble    3.2.1
 ## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
-## ✖ dplyr::filter() masks stats::filter()
-## ✖ dplyr::lag()    masks stats::lag()
+## ✖ dplyr::filter()    masks stats::filter()
+## ✖ dplyr::lag()       masks stats::lag()
+## ✖ Hmisc::src()       masks dplyr::src()
+## ✖ Hmisc::summarize() masks dplyr::summarize()
 ## ℹ Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors</code></pre>
-<pre class="r"><code>NHANES2 &lt;- read.csv(&quot;NHANES2-1 (1).csv&quot;)</code></pre>
-<pre class="r"><code>d &lt;- NHANES2 %&gt;% 
-  select(&#39;ROWNAMES&#39;,&#39;SEX&#39;,&#39;RACE&#39;,&#39;MARRY&#39;,&#39;DEATH&#39;,&#39;AGEYRS&#39;,
-                    &#39;GRADES&#39;,&#39;WT&#39;, &#39;BOOZE&#39;, &#39;SIZE&#39;,
-         &#39;AVGSMK&#39;, &quot;HEIGHT&quot;, &quot;EXAM_YR&quot;, &quot;DIE_YR&quot;, &quot;LAST_YR&quot;)</code></pre>
+<pre class="r"><code>if (!require(&quot;tableone&quot;)) install.packages(&quot;tableone&quot;)</code></pre>
+<pre><code>## Loading required package: tableone</code></pre>
+<pre class="r"><code>library(dplyr)
+library(skimr)
+library(tidyr)
+library(survival)
+library(survminer)
+library(haven)
+library(broom)
+library(rms)
+library(tidyverse) 
+library(tableone)
+NHANES2 &lt;- read.csv(&quot;NHANES2-1 (1).csv&quot;)
+d &lt;- NHANES2 #%&gt;% 
+  #select(&#39;ROWNAMES&#39;,&#39;SEX&#39;,&#39;RACE&#39;,&#39;MARRY&#39;,&#39;DEATH&#39;,&#39;AGEYRS&#39;,
+                    #&#39;GRADES&#39;,&#39;WT&#39;, &#39;BOOZE&#39;, &#39;SIZE&#39;,
+         #&#39;AVGSMK&#39;, &quot;HEIGHT&quot;, &quot;EXAM_YR&quot;, &quot;DIE_YR&quot;, &quot;LAST_YR&quot;)</code></pre>
 <pre class="r"><code>#Exclude missing death 
 d &lt;- d %&gt;%
-  filter(!is.na(DEATH))  
+  filter(!is.na(BOOZE), !is.na(DEATH), !is.na(SEX), !is.na(RACE), !is.na(GRADES), !is.na(MARRY), !is.na(AVGSMK), !is.na(SIZE), !is.na(GRADES))
 
 #BMI
 d &lt;- d %&gt;%
@@ -405,11 +458,6 @@ vars &lt;- c(&quot;AGEYRS&quot;, &quot;SEX&quot;, &quot;RACE&quot;, &quot;MARRY&
 catVars &lt;- c(&quot;SEX&quot;, &quot;RACE&quot;, &quot;MARRY&quot;)
 
 #Table 1
-if (!require(&quot;tableone&quot;)) {
-  install.packages(&quot;tableone&quot;)
-}</code></pre>
-<pre><code>## Loading required package: tableone</code></pre>
-<pre class="r"><code>library(tableone)
 
 table1 &lt;- CreateTableOne(vars = vars, 
                          data = d, 
@@ -469,6 +517,102 @@ print(table1, showAllLevels = TRUE)</code></pre>
 ##                        346 (13.7)             
 ##                        261 (10.3)             
 ##                        681 (26.9)</code></pre>
+<pre class="r"><code>d &lt;- d %&gt;%
+  mutate(
+    BOOZE_q = as.factor(BOOZE_q),
+    SEX = as.factor(SEX),
+    RACE = as.factor(RACE),
+    MARRY = as.factor(MARRY),
+    SIZE = factor(SIZE),
+    entry = (EXAM_YR * 12) + EXAM_MO,
+    exit = (LAST_YR * 12) + LAST_MO + (LAST_DAY/30),
+    FU = exit - entry
+  )
+
+cox_test &lt;- coxph(Surv(FU, DEATH) ~ BOOZE_q, data = d)
+summary(cox_test)</code></pre>
+<pre><code>## Call:
+## coxph(formula = Surv(FU, DEATH) ~ BOOZE_q, data = d)
+## 
+##   n= 7105, number of events= 0 
+## 
+##                   coef exp(coef) se(coef)  z Pr(&gt;|z|)
+## BOOZE_q0–0.5/week   NA        NA        0 NA       NA
+## BOOZE_q0.5–2/week   NA        NA        0 NA       NA
+## BOOZE_q&gt;2/week      NA        NA        0 NA       NA
+## 
+##                   exp(coef) exp(-coef) lower .95 upper .95
+## BOOZE_q0–0.5/week        NA         NA        NA        NA
+## BOOZE_q0.5–2/week        NA         NA        NA        NA
+## BOOZE_q&gt;2/week           NA         NA        NA        NA
+## 
+## Concordance= NA  (se = NA )
+## Likelihood ratio test= 0  on 0 df,   p=1
+## Wald test            = 0  on 0 df,   p=1
+## Score (logrank) test = 0  on 0 df,   p=1</code></pre>
+<pre class="r"><code>d &lt;- d %&gt;%
+  filter(complete.cases(BOOZE_q, SEX, AGEYRS, RACE, GRADES, MARRY, BMI, AVGSMK, SIZE, FU, DEATH))
+
+
+cox &lt;- coxph(Surv(FU, DEATH) ~ BOOZE_q + SEX + RACE + GRADES + MARRY + BMI + 
+               AVGSMK + SIZE, data = d, ties=&#39;efron&#39;)
+summary(cox)</code></pre>
+<pre><code>## Call:
+## coxph(formula = Surv(FU, DEATH) ~ BOOZE_q + SEX + RACE + GRADES + 
+##     MARRY + BMI + AVGSMK + SIZE, data = d, ties = &quot;efron&quot;)
+## 
+##   n= 7105, number of events= 0 
+## 
+##                   coef exp(coef) se(coef)  z Pr(&gt;|z|)
+## BOOZE_q0–0.5/week   NA        NA        0 NA       NA
+## BOOZE_q0.5–2/week   NA        NA        0 NA       NA
+## BOOZE_q&gt;2/week      NA        NA        0 NA       NA
+## SEX2                NA        NA        0 NA       NA
+## RACE2               NA        NA        0 NA       NA
+## RACE3               NA        NA        0 NA       NA
+## GRADES              NA        NA        0 NA       NA
+## MARRY3              NA        NA        0 NA       NA
+## MARRY4              NA        NA        0 NA       NA
+## MARRY5              NA        NA        0 NA       NA
+## MARRY6              NA        NA        0 NA       NA
+## MARRY8              NA        NA        0 NA       NA
+## BMI                 NA        NA        0 NA       NA
+## AVGSMK              NA        NA        0 NA       NA
+## SIZE2               NA        NA        0 NA       NA
+## SIZE3               NA        NA        0 NA       NA
+## SIZE4               NA        NA        0 NA       NA
+## SIZE5               NA        NA        0 NA       NA
+## SIZE6               NA        NA        0 NA       NA
+## SIZE7               NA        NA        0 NA       NA
+## SIZE8               NA        NA        0 NA       NA
+## 
+##                   exp(coef) exp(-coef) lower .95 upper .95
+## BOOZE_q0–0.5/week        NA         NA        NA        NA
+## BOOZE_q0.5–2/week        NA         NA        NA        NA
+## BOOZE_q&gt;2/week           NA         NA        NA        NA
+## SEX2                     NA         NA        NA        NA
+## RACE2                    NA         NA        NA        NA
+## RACE3                    NA         NA        NA        NA
+## GRADES                   NA         NA        NA        NA
+## MARRY3                   NA         NA        NA        NA
+## MARRY4                   NA         NA        NA        NA
+## MARRY5                   NA         NA        NA        NA
+## MARRY6                   NA         NA        NA        NA
+## MARRY8                   NA         NA        NA        NA
+## BMI                      NA         NA        NA        NA
+## AVGSMK                   NA         NA        NA        NA
+## SIZE2                    NA         NA        NA        NA
+## SIZE3                    NA         NA        NA        NA
+## SIZE4                    NA         NA        NA        NA
+## SIZE5                    NA         NA        NA        NA
+## SIZE6                    NA         NA        NA        NA
+## SIZE7                    NA         NA        NA        NA
+## SIZE8                    NA         NA        NA        NA
+## 
+## Concordance= NA  (se = NA )
+## Likelihood ratio test= 0  on 0 df,   p=1
+## Wald test            = 0  on 0 df,   p=1
+## Score (logrank) test = 0  on 0 df,   p=1</code></pre>
 
 
 
