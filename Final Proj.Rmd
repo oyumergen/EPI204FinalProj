@@ -106,5 +106,13 @@ cox_product <- coxph(Surv(FU, DEATH) ~ as.factor(BOOZE_q)*SEX +
 summary(cox_product)
 cox.zph(cox_product)
 plot(cox.zph(cox_product))
+
+#Kaplan
+fit<-survfit(Surv(FU, DEATH)~BOOZE_q, data=d)
+summary(fit)
+summary(fit)$table
+
+#Log-rank test
+survdiff(Surv(FU, DEATH)~BOOZE_q, data=d) 
 ```
 
