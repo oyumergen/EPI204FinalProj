@@ -373,77 +373,78 @@ display: none;
          &#39;AVGSMK&#39;, &quot;HEIGHT&quot;, &quot;EXAM_YR&quot;, &quot;DIE_YR&quot;, &quot;LAST_YR&quot;)</code></pre>
 <pre class="r"><code>#Exclude missing death 
 d &lt;- d %&gt;%
-  filter(!is.na(DEATH))
+  filter(!is.na(DEATH))  
 
+#BMI
 d &lt;- d %&gt;%
-  mutate(BMI = WT/(HEIGHT/100)^2,
-         BOOZE_q = cut(BOOZE,breaks =  c(-1, 0, 0.5, 2.0, 77.0),
-                       include.lowest = T)) 
-dim(d)</code></pre>
-<pre><code>## [1] 9250   17</code></pre>
-<pre class="r"><code>if (!require(&quot;tableone&quot;)) {
+  mutate(BMI = WT / (HEIGHT / 100)^2)
+
+head(d$BMI)</code></pre>
+<pre><code>## [1] 20.49522 21.02151 23.22748 35.72785 27.92312 30.50132</code></pre>
+<pre class="r"><code># GRADES and SIZE categories
+d$EDUC_CAT &lt;- cut(d$GRADES,
+                  breaks = c(-Inf, 8, 11, 12, 15, Inf),
+                  labels = c(&quot;≤8 yrs&quot;, &quot;Some HS&quot;, &quot;HS Grad&quot;, &quot;Some College&quot;, &quot;College+&quot;),
+                  right = TRUE)
+
+d$SIZE_CAT &lt;- cut(d$SIZE,
+                  breaks = c(0, 3, 5, 7, 8),
+                  labels = c(&quot;Rural&quot;, &quot;Small town&quot;, &quot;Medium city&quot;, &quot;Large city&quot;),
+                  right = TRUE)
+
+# Catergorical BOOZE
+d &lt;- d %&gt;%
+  mutate(BOOZE_q = cut(
+    BOOZE,
+    breaks = c(-1, 0, 0.5, 2.0, 77.0),
+    include.lowest = TRUE,
+    labels = c(&quot;0/week&quot;, &quot;0–0.5/week&quot;, &quot;0.5–2/week&quot;, &quot;&gt;2/week&quot;)
+  ))
+
+vars &lt;- c(&quot;AGEYRS&quot;, &quot;SEX&quot;, &quot;RACE&quot;, &quot;MARRY&quot;, &quot;BMI&quot;, &quot;AVGSMK&quot;, &quot;EDUC_CAT&quot;, &quot;SIZE_CAT&quot;)
+catVars &lt;- c(&quot;SEX&quot;, &quot;RACE&quot;, &quot;MARRY&quot;)
+
+#Table 1
+if (!require(&quot;tableone&quot;)) {
   install.packages(&quot;tableone&quot;)
 }</code></pre>
 <pre><code>## Loading required package: tableone</code></pre>
 <pre class="r"><code>library(tableone)
 
-
-vars &lt;- c(&quot;AGEYRS&quot;, &quot;SEX&quot;, &quot;RACE&quot;, &quot;MARRY&quot;, &quot;BMI&quot;, &quot;GRADES&quot;, &quot;AVGSMK&quot;, &quot;SIZE&quot;)
-catVars &lt;- c(&quot;SEX&quot;, &quot;RACE&quot;, &quot;MARRY&quot;, &quot;GRADES&quot;, &quot;SIZE&quot;)  
-
-#Table 1
 table1 &lt;- CreateTableOne(vars = vars, 
                          data = d, 
                          strata = &quot;BOOZE_q&quot;,  
                          factorVars = catVars)
 
-
 print(table1, showAllLevels = TRUE)</code></pre>
 <pre><code>##                     Stratified by BOOZE_q
-##                      level [-1,0]        (0,0.5]       (0.5,2]      
-##   n                         4053           941          1729        
-##   AGEYRS (mean (SD))       57.09 (12.79) 54.34 (13.36) 51.60 (13.53)
-##   SEX (%)            1      1448 (35.7)    367 (39.0)    856 (49.5) 
-##                      2      2605 (64.3)    574 (61.0)    873 (50.5) 
-##   RACE (%)           1      3497 (86.3)    827 (87.9)   1515 (87.6) 
-##                      2       475 (11.7)     93 ( 9.9)    194 (11.2) 
-##                      3        81 ( 2.0)     21 ( 2.2)     20 ( 1.2) 
-##   MARRY (%)          2      2885 (71.2)    683 (72.6)   1288 (74.5) 
-##                      3       671 (16.6)    127 (13.5)    172 ( 9.9) 
-##                      4       190 ( 4.7)     67 ( 7.1)    102 ( 5.9) 
-##                      5        96 ( 2.4)     20 ( 2.1)     59 ( 3.4) 
-##                      6       202 ( 5.0)     40 ( 4.3)    103 ( 6.0) 
-##                      8         9 ( 0.2)      4 ( 0.4)      5 ( 0.3) 
-##   BMI (mean (SD))          26.55 (5.50)  26.42 (5.10)  26.03 (4.84) 
-##   GRADES (%)         0        60 ( 1.5)     11 ( 1.2)     13 ( 0.8) 
-##                      1        34 ( 0.8)      2 ( 0.2)      3 ( 0.2) 
-##                      2        40 ( 1.0)      4 ( 0.4)     10 ( 0.6) 
-##                      3        87 ( 2.1)      7 ( 0.7)     30 ( 1.7) 
-##                      4       120 ( 3.0)     16 ( 1.7)     23 ( 1.3) 
-##                      5        99 ( 2.4)     10 ( 1.1)     31 ( 1.8) 
-##                      6       191 ( 4.7)     25 ( 2.7)     51 ( 2.9) 
-##                      7       191 ( 4.7)     30 ( 3.2)     48 ( 2.8) 
-##                      8       630 (15.5)    112 (11.9)    128 ( 7.4) 
-##                      9       242 ( 6.0)     62 ( 6.6)     73 ( 4.2) 
-##                      10      306 ( 7.5)     70 ( 7.4)    118 ( 6.8) 
-##                      11      205 ( 5.1)     53 ( 5.6)     91 ( 5.3) 
-##                      12     1209 (29.8)    311 (33.0)    636 (36.8) 
-##                      13      141 ( 3.5)     49 ( 5.2)     71 ( 4.1) 
-##                      14      148 ( 3.7)     55 ( 5.8)    117 ( 6.8) 
-##                      15       64 ( 1.6)     26 ( 2.8)     47 ( 2.7) 
-##                      16      153 ( 3.8)     55 ( 5.8)    127 ( 7.3) 
-##                      17      133 ( 3.3)     43 ( 4.6)    112 ( 6.5) 
-##   AVGSMK (mean (SD))        4.82 (10.84)  6.72 (12.63)  8.26 (13.77)
-##   SIZE (%)           1       312 ( 7.7)    110 (11.7)    286 (16.5) 
-##                      2       358 ( 8.8)    136 (14.5)    253 (14.6) 
-##                      3       431 (10.6)    102 (10.8)    219 (12.7) 
-##                      4       305 ( 7.5)     84 ( 8.9)    165 ( 9.5) 
-##                      5       149 ( 3.7)     39 ( 4.1)     79 ( 4.6) 
-##                      6       173 ( 4.3)     44 ( 4.7)     59 ( 3.4) 
-##                      7       396 ( 9.8)     74 ( 7.9)    146 ( 8.4) 
-##                      8      1929 (47.6)    352 (37.4)    522 (30.2) 
+##                      level        0/week        0–0.5/week    0.5–2/week   
+##   n                                4053           941          1729        
+##   AGEYRS (mean (SD))              57.09 (12.79) 54.34 (13.36) 51.60 (13.53)
+##   SEX (%)            1             1448 (35.7)    367 (39.0)    856 (49.5) 
+##                      2             2605 (64.3)    574 (61.0)    873 (50.5) 
+##   RACE (%)           1             3497 (86.3)    827 (87.9)   1515 (87.6) 
+##                      2              475 (11.7)     93 ( 9.9)    194 (11.2) 
+##                      3               81 ( 2.0)     21 ( 2.2)     20 ( 1.2) 
+##   MARRY (%)          2             2885 (71.2)    683 (72.6)   1288 (74.5) 
+##                      3              671 (16.6)    127 (13.5)    172 ( 9.9) 
+##                      4              190 ( 4.7)     67 ( 7.1)    102 ( 5.9) 
+##                      5               96 ( 2.4)     20 ( 2.1)     59 ( 3.4) 
+##                      6              202 ( 5.0)     40 ( 4.3)    103 ( 6.0) 
+##                      8                9 ( 0.2)      4 ( 0.4)      5 ( 0.3) 
+##   BMI (mean (SD))                 26.55 (5.50)  26.42 (5.10)  26.03 (4.84) 
+##   AVGSMK (mean (SD))               4.82 (10.84)  6.72 (12.63)  8.26 (13.77)
+##   EDUC_CAT (%)       ≤8 yrs        1452 (35.8)    217 (23.1)    337 (19.5) 
+##                      Some HS        753 (18.6)    185 (19.7)    282 (16.3) 
+##                      HS Grad       1209 (29.8)    311 (33.0)    636 (36.8) 
+##                      Some College   353 ( 8.7)    130 (13.8)    235 (13.6) 
+##                      College+       286 ( 7.1)     98 (10.4)    239 (13.8) 
+##   SIZE_CAT (%)       Rural         1101 (27.2)    348 (37.0)    758 (43.8) 
+##                      Small town     454 (11.2)    123 (13.1)    244 (14.1) 
+##                      Medium city    569 (14.0)    118 (12.5)    205 (11.9) 
+##                      Large city    1929 (47.6)    352 (37.4)    522 (30.2) 
 ##                     Stratified by BOOZE_q
-##                      (2,77]        p      test
+##                      &gt;2/week       p      test
 ##   n                   2527                    
 ##   AGEYRS (mean (SD)) 51.71 (13.18) &lt;0.001     
 ##   SEX (%)             1678 (66.4)  &lt;0.001     
@@ -458,32 +459,15 @@ print(table1, showAllLevels = TRUE)</code></pre>
 ##                        140 ( 5.5)             
 ##                          7 ( 0.3)             
 ##   BMI (mean (SD))    25.20 (4.08)  &lt;0.001     
-##   GRADES (%)            10 ( 0.4)  &lt;0.001     
-##                          5 ( 0.2)             
-##                         12 ( 0.5)             
-##                         28 ( 1.1)             
-##                         23 ( 0.9)             
-##                         17 ( 0.7)             
-##                         57 ( 2.3)             
-##                         47 ( 1.9)             
-##                        188 ( 7.4)             
-##                         91 ( 3.6)             
-##                        156 ( 6.2)             
-##                        107 ( 4.2)             
-##                        876 (34.7)             
-##                        154 ( 6.1)             
-##                        181 ( 7.2)             
-##                         76 ( 3.0)             
-##                        224 ( 8.9)             
-##                        275 (10.9)             
 ##   AVGSMK (mean (SD))  9.60 (13.92) &lt;0.001     
-##   SIZE (%)             446 (17.6)  &lt;0.001     
-##                        442 (17.5)             
-##                        351 (13.9)             
-##                        237 ( 9.4)             
-##                        109 ( 4.3)             
-##                         96 ( 3.8)             
-##                        165 ( 6.5)             
+##   EDUC_CAT (%)         387 (15.3)  &lt;0.001     
+##                        354 (14.0)             
+##                        876 (34.7)             
+##                        411 (16.3)             
+##                        499 (19.7)             
+##   SIZE_CAT (%)        1239 (49.0)  &lt;0.001     
+##                        346 (13.7)             
+##                        261 (10.3)             
 ##                        681 (26.9)</code></pre>
 
 

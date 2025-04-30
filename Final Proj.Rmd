@@ -22,34 +22,50 @@ d <- NHANES2 %>%
 ```{r}
 #Exclude missing death 
 d <- d %>%
-  filter(!is.na(DEATH))
+  filter(!is.na(DEATH))  
 
+#BMI
 d <- d %>%
-  mutate(BMI = WT/(HEIGHT/100)^2,
-         BOOZE_q = cut(BOOZE,breaks =  c(-1, 0, 0.5, 2.0, 77.0),
-                       include.lowest = T)) 
-dim(d)
+  mutate(BMI = WT / (HEIGHT / 100)^2)
 
-```
+head(d$BMI)
 
-```{r}
+# GRADES and SIZE categories
+d$EDUC_CAT <- cut(d$GRADES,
+                  breaks = c(-Inf, 8, 11, 12, 15, Inf),
+                  labels = c("≤8 yrs", "Some HS", "HS Grad", "Some College", "College+"),
+                  right = TRUE)
+
+d$SIZE_CAT <- cut(d$SIZE,
+                  breaks = c(0, 3, 5, 7, 8),
+                  labels = c("Rural", "Small town", "Medium city", "Large city"),
+                  right = TRUE)
+
+# Catergorical BOOZE
+d <- d %>%
+  mutate(BOOZE_q = cut(
+    BOOZE,
+    breaks = c(-1, 0, 0.5, 2.0, 77.0),
+    include.lowest = TRUE,
+    labels = c("0/week", "0–0.5/week", "0.5–2/week", ">2/week")
+  ))
+
+vars <- c("AGEYRS", "SEX", "RACE", "MARRY", "BMI", "AVGSMK", "EDUC_CAT", "SIZE_CAT")
+catVars <- c("SEX", "RACE", "MARRY")
+
+#Table 1
 if (!require("tableone")) {
   install.packages("tableone")
 }
 library(tableone)
 
-
-vars <- c("AGEYRS", "SEX", "RACE", "MARRY", "BMI", "GRADES", "AVGSMK", "SIZE")
-catVars <- c("SEX", "RACE", "MARRY", "GRADES", "SIZE")  
-
-#Table 1
 table1 <- CreateTableOne(vars = vars, 
                          data = d, 
                          strata = "BOOZE_q",  
                          factorVars = catVars)
 
-
 print(table1, showAllLevels = TRUE)
+
 ```
 
 
