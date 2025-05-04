@@ -107,6 +107,22 @@ summary(cox_product)
 cox.zph(cox_product)
 plot(cox.zph(cox_product))
 
+#Stratified model by SEX
+cox_men <- coxph(Surv(FU, DEATH) ~ as.factor(BOOZE_q) + 
+        AGEYRS + as.factor(RACE) +  as.factor(EDUC_CAT) + 
+                    as.factor(MARRY) + BMI + AVGSMK + as.factor(SIZE_CAT), 
+                    data = d[d$SEX == 1, ])
+summary(cox_men)
+cox.zph(cox_men)
+plot(cox.zph(cox_men))
+
+cox_women <- coxph(Surv(FU, DEATH) ~ as.factor(BOOZE_q) + AGEYRS + 
+                        as.factor(RACE) + as.factor(EDUC_CAT) + as.factor(MARRY) + 
+            BMI + AVGSMK + as.factor(SIZE_CAT), data = d[d$SEX == 2, ])
+summary(cox_women)
+cox.zph(cox_women)
+plot(cox.zph(cox_women))
+
 #Kaplan
 fit<-survfit(Surv(FU, DEATH)~BOOZE_q, data=d)
 summary(fit)
@@ -114,5 +130,63 @@ summary(fit)$table
 
 #Log-rank test
 survdiff(Surv(FU, DEATH)~BOOZE_q, data=d) 
+```
+
+```{r}
+#Sensitivity analysis (Poisson model)
+#Exclude follow-up = 0
+d_pois <- d %>%
+  filter(FU > 0)
+
+poisson <- glm(DEATH ~ as.factor(BOOZE_q) + SEX +
+                 as.factor(RACE) + as.factor(EDUC_CAT) +
+                 as.factor(MARRY) + BMI + AVGSMK + SIZE,
+               family = poisson(link = "log"),
+               offset = log(FU), data = d_pois)
+
+summary(poisson)
+exp(coef(poisson))
+exp(confint(poisson))
+```
+
+```{r}
+#Table 2
+# Age-adjusted Cox model
+cox_age <- coxph(Surv(FU, DEATH) ~ as.factor(BOOZE_q) + AGEYRS, data = d)
+
+# Age-adjusted Poisson model
+poisson_age <- glm(DEATH ~ as.factor(BOOZE_q) + AGEYRS,
+                   family = poisson(link = "log"),
+                   offset = log(FU), data = d_pois)
+
+# View results
+summary(cox_age)
+summary(poisson_age)
+
+# Tidy model outputs
+cox_age_tidy     <- tidy(cox_age, exponentiate = TRUE, conf.int = TRUE)
+cox_full_tidy    <- tidy(cox, exponentiate = TRUE, conf.int = TRUE)
+poisson_age_tidy <- tidy(poisson_age, exponentiate = TRUE, conf.int = TRUE)
+poisson_full_tidy<- tidy(poisson, exponentiate = TRUE, conf.int = TRUE)
+
+booze_terms <- function(df, model_name) {
+  df %>%
+    filter(grepl("BOOZE_q", term)) %>%
+    mutate(model = model_name,
+           estimate_CI = paste0(round(estimate, 2), " (",
+                                round(conf.low, 2), ", ",
+                                round(conf.high, 2), ")")) %>%
+    select(term, model, estimate_CI)
+}
+
+results <- bind_rows(
+  booze_terms(cox_age_tidy, "Cox Age-adjusted"),
+  booze_terms(cox_full_tidy, "Cox Full-adjusted"),
+  booze_terms(poisson_age_tidy, "Poisson Age-adjusted"),
+  booze_terms(poisson_full_tidy, "Poisson Full-adjusted")
+)
+
+table2_clean <- results %>%
+  pivot_wider(names_from = model, values_from = estimate_CI)
 ```
 
