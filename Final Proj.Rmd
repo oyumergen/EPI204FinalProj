@@ -42,7 +42,7 @@ d <- NHANES2 #%>%
 ```{r}
 #Exclude missing death 
 d <- d %>%
-  filter(!is.na(BOOZE), !is.na(DEATH), !is.na(SEX), !is.na(RACE), !is.na(GRADES), !is.na(AVGSMK), !is.na(SIZE), !is.na(GRADES))
+  filter(!is.na(BOOZE), !is.na(DEATH), !is.na(SEX), !is.na(RACE), !is.na(GRADES), !is.na(AVGSMK), !is.na(SIZE), !is.na(GRADES), !is.na(RECEX))
 
 #BMI
 d <- d %>%
@@ -70,8 +70,8 @@ d <- d %>%
     labels = c("0/week", "0–0.5/week", "0.5–2/week", ">2/week")
   ))
 
-vars <- c("AGEYRS", "SEX", "RACE", "MARRY", "BMI", "AVGSMK", "EDUC_CAT", "SIZE_CAT")
-catVars <- c("SEX", "RACE", "MARRY")
+vars <- c("AGEYRS", "SEX", "RACE", "MARRY", "BMI", "AVGSMK", "EDUC_CAT", "SIZE_CAT", "RECEX")
+catVars <- c("SEX", "RACE", "MARRY", "RECEX")
 
 #Table 1
 
@@ -104,7 +104,7 @@ termplot(cox_nl, term = 1, se = TRUE,
          main = "Nonlinearity Check: BOOZE")
 cox_nl1 <- coxph(Surv(FU, DEATH) ~ pspline(BOOZE, df = 4) + SEX + AGEYRS +
                as.factor(RACE) + as.factor(EDUC_CAT) + as.factor(MARRY) + BMI + 
-               AVGSMK + as.factor(SIZE_CAT), data = d, ties = 'efron')
+               AVGSMK + as.factor(SIZE_CAT) + as.factor(RECEX), data = d, ties = 'efron')
 summary(cox_nl1)
 termplot(cox_nl1, term = 2, se = TRUE,
          xlab = "BOOZE (drinks/week)",
@@ -117,14 +117,14 @@ d <- d %>%
 
 cox_lin <- coxph(Surv(FU, DEATH) ~ BOOZE + SEX + AGEYRS +
                as.factor(RACE) + as.factor(EDUC_CAT) + as.factor(MARRY) + BMI + 
-               AVGSMK + as.factor(SIZE_CAT), data = d, ties = 'efron')
+               AVGSMK + as.factor(SIZE_CAT) + as.factor(RECEX), data = d, ties = 'efron')
 cox.zph(cox_lin)
 plot(cox.zph(cox_lin))
 
 ### Model with BOOZE squared
 model_quad <- coxph(Surv(FU, DEATH) ~ BOOZE + booze_2 + SEX + AGEYRS +
                as.factor(RACE) + as.factor(EDUC_CAT) + as.factor(MARRY) + BMI + 
-               AVGSMK + as.factor(SIZE_CAT), data = d, ties = 'efron')
+               AVGSMK + as.factor(SIZE_CAT) + as.factor(RECEX), data = d, ties = 'efron')
 summary(model_quad)
 
 ### Compare linear vs quadratic
@@ -133,7 +133,7 @@ anova(cox_lin, model_quad)
 ### Model with BOOZE cubed
 model_cubic <- coxph(Surv(FU, DEATH) ~ BOOZE + booze_2 + booze_3 + SEX + AGEYRS +
                as.factor(RACE) + as.factor(EDUC_CAT) + as.factor(MARRY) + BMI + 
-               AVGSMK + as.factor(SIZE_CAT), data = d, ties = 'efron')
+               AVGSMK + as.factor(SIZE_CAT) + as.factor(RECEX), data = d, ties = 'efron')
 summary(model_cubic)
 
 ### Compare linear vs cubic
@@ -142,7 +142,7 @@ anova(cox_lin, model_cubic)
 #Adjusted Cox regression with SEX
 cox <- coxph(Surv(FU, DEATH) ~ as.factor(BOOZE_q) + SEX + AGEYRS +
                as.factor(RACE) + as.factor(EDUC_CAT) + as.factor(MARRY) + BMI + 
-               AVGSMK + as.factor(SIZE_CAT), data = d, ties='efron')
+               AVGSMK + as.factor(SIZE_CAT) + as.factor(RECEX), data = d, ties='efron')
 summary(cox)
 cox.zph(cox)
 plot(cox.zph(cox))
@@ -156,24 +156,24 @@ d <- d %>%
 ##Primary interaction model (for EMM test)
 cox_int <- coxph(Surv(FU, DEATH) ~ BOOZE * sex_f + AGEYRS + factor(RACE) + 
                    factor(EDUC_CAT) + factor(MARRY) + BMI + AVGSMK + 
-                   factor(SIZE_CAT), data = d, ties = 'efron')
+                   factor(SIZE_CAT) + factor(RECEX), data = d, ties = 'efron')
 summary(cox_int)
 anova(cox_int)
 cox.zph(cox_int)
 
 ##Common BOOZE slope, separate baselines by sex
 cox_strata_sex <- coxph(Surv(FU, DEATH) ~ BOOZE + AGEYRS + factor(RACE) + factor(EDUC_CAT) +
-                          factor(MARRY) + BMI + AVGSMK + factor(SIZE_CAT) + strata(sex_f), data = d, ties = 'efron')
+                          factor(MARRY) + BMI + AVGSMK + factor(SIZE_CAT) + factor(RECEX) + strata(sex_f), data = d, ties = 'efron')
 
 summary(cox_strata_sex)
 cox.zph(cox_strata_sex)
 
 ##Separate sex-specific models  (for Table 3)
 cox_men <- coxph(Surv(FU, DEATH) ~ BOOZE + AGEYRS + factor(RACE) + factor(EDUC_CAT)+ factor(MARRY) + 
-    BMI + AVGSMK + factor(SIZE_CAT), data = d, subset = (sex_f == "Male"), ties = 'efron')
+    BMI + AVGSMK + factor(SIZE_CAT) + factor(RECEX), data = d, subset = (sex_f == "Male"), ties = 'efron')
 
 cox_women <- coxph(Surv(FU, DEATH) ~ BOOZE + AGEYRS + factor(RACE) + factor(EDUC_CAT) + 
-    factor(MARRY) + BMI + AVGSMK + factor(SIZE_CAT), data = d, subset = (sex_f == "Female"), ties = 'efron')
+    factor(MARRY) + BMI + AVGSMK + factor(SIZE_CAT) + factor(RECEX), data = d, subset = (sex_f == "Female"), ties = 'efron')
 
 summary(cox_men);   cox.zph(cox_men)
 summary(cox_women); cox.zph(cox_women)
@@ -181,10 +181,16 @@ summary(cox_women); cox.zph(cox_women)
 ##Sensitivity model (fix PH by stratifying on BOOZE and sex)
   ## (No BOOZE HR is provided: used only to show PH doesn’t distort results)
 cox_strata_booze_sex <- coxph(Surv(FU, DEATH) ~ AGEYRS + factor(RACE) + factor(EDUC_CAT) +
-                                factor(MARRY) + BMI + AVGSMK + factor(SIZE_CAT) +
+                                factor(MARRY) + BMI + AVGSMK + factor(SIZE_CAT) + factor(RECEX) +
                                 strata(BOOZE, sex_f), data = d, ties = 'efron')
 summary(cox_strata_booze_sex)
 cox.zph(cox_strata_booze_sex)
+
+# address PH violation by including interaction term with time
+cox_strata_lin <- coxph(Surv(FU, DEATH) ~ BOOZE + tt(BOOZE) + SEX +
+                        + AGEYRS + as.factor(RACE) + as.factor(EDUC_CAT) + as.factor(MARRY) + BMI + 
+                   AVGSMK + as.factor(SIZE_CAT) + as.factor(RECEX), data = d, tt=function(x,t,...)x*t)
+summary(cox_strata_lin)
 
 #Kaplan
 fit<-survfit(Surv(FU, DEATH)~BOOZE_q, data=d)
@@ -206,7 +212,7 @@ d_pois$ln_fu <- log(d_pois$FU)
 pois_main <- glm(
   DEATH ~ BOOZE + sex_f + AGEYRS +
     factor(RACE) + factor(EDUC_CAT) + factor(MARRY) +
-    BMI + AVGSMK + factor(SIZE_CAT),
+    BMI + AVGSMK + factor(SIZE_CAT) + factor(RECEX),
   family = poisson(link = "log"),
   offset = ln_fu,
   data   = d_pois
