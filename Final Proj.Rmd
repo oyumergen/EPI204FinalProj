@@ -193,19 +193,29 @@ survdiff(Surv(FU, DEATH)~BOOZE_q, data=d)
 
 ```{r}
 #Sensitivity analysis (Poisson model)
-#Exclude follow-up = 0
-d_pois <- d %>%
-  filter(FU > 0)
+## Drop any zero or invalid follow‑up times, create the log offset
+d_pois       <- d %>% filter(FU > 0)
+## Offset for person-time
+d_pois$ln_fu <- log(d_pois$FU)
 
-poisson <- glm(DEATH ~ as.factor(BOOZE_q) + SEX +
-                 as.factor(RACE) + as.factor(EDUC_CAT) +
-                 as.factor(MARRY) + BMI + AVGSMK + SIZE,
-               family = poisson(link = "log"),
-               offset = log(FU), data = d_pois)
+## Main Poisson
+pois_main <- glm(
+  DEATH ~ BOOZE + sex_f + AGEYRS +
+    factor(RACE) + factor(EDUC_CAT) + factor(MARRY) +
+    BMI + AVGSMK + factor(SIZE_CAT),
+  family = poisson(link = "log"),
+  offset = ln_fu,
+  data   = d_pois
+)
+summary(pois_main)
 
-summary(poisson)
-exp(coef(poisson))
-exp(confint(poisson))
+exp(cbind(IRR = coef(pois_main), confint(pois_main)))
+
+rob_vcov <- sandwich::vcovHC(pois_main, type = "HC3")
+print(lmtest::coeftest(pois_main, vcov = rob_vcov))
+
+phi <- deviance(pois_main) / pois_main$df.residual
+cat("Dispersion factor φ =", round(phi, 2), "\n")
 ```
 
 ```{r}
