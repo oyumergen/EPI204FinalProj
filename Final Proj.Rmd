@@ -17,6 +17,8 @@ if (!require("broom")) install.packages("broom")
 if (!require("rms")) install.packages("rms")
 if (!require("tidyverse")) install.packages("tidyverse")
 if (!require("tableone")) install.packages("tableone")
+if (!require("purr")) install.packages("purr")
+if (!require("knitr")) install.packages("knitr")
 
 library(dplyr)
 library(skimr)
@@ -28,6 +30,8 @@ library(broom)
 library(rms)
 library(tidyverse) 
 library(tableone)
+library(purrr)
+library(knitr)
 NHANES2 <- read.csv("NHANES2-1 (1).csv")
 d <- NHANES2 #%>% 
   #select('ROWNAMES','SEX','RACE','MARRY','DEATH','AGEYRS',
@@ -215,48 +219,47 @@ rob_vcov <- sandwich::vcovHC(pois_main, type = "HC3")
 print(lmtest::coeftest(pois_main, vcov = rob_vcov))
 
 phi <- deviance(pois_main) / pois_main$df.residual
-cat("Dispersion factor φ =", round(phi, 2), "\n")
+cat("Dispersion factor =", round(phi, 2), "\n")
 ```
 
 ```{r}
 #Table 2
-# Age-adjusted Cox model
-cox_age <- coxph(Surv(FU, DEATH) ~ as.factor(BOOZE_q) + AGEYRS, data = d)
+# Age‑adjusted Cox
+cox_age  <- coxph(Surv(FU, DEATH) ~ BOOZE + AGEYRS, data = d, ties = "efron")
 
-# Age-adjusted Poisson model
-poisson_age <- glm(DEATH ~ as.factor(BOOZE_q) + AGEYRS,
-                   family = poisson(link = "log"),
-                   offset = log(FU), data = d_pois)
+# Multivariable Cox (reuse your fully adjusted model)
+cox_full <- cox_lin
 
-# View results
-summary(cox_age)
-summary(poisson_age)
+# Age‑adjusted Poisson
+pois_age <- glm(DEATH ~ BOOZE + AGEYRS, family = poisson(link = "log"),
+  offset = log(FU), data = d_pois)
 
-# Tidy model outputs
-cox_age_tidy     <- tidy(cox_age, exponentiate = TRUE, conf.int = TRUE)
-cox_full_tidy    <- tidy(cox, exponentiate = TRUE, conf.int = TRUE)
-poisson_age_tidy <- tidy(poisson_age, exponentiate = TRUE, conf.int = TRUE)
-poisson_full_tidy<- tidy(poisson, exponentiate = TRUE, conf.int = TRUE)
+# Multivariable Poisson (reuse your fully adjusted Poisson)
+pois_full <- pois_main
 
-booze_terms <- function(df, model_name) {
-  df %>%
-    filter(grepl("BOOZE_q", term)) %>%
-    mutate(model = model_name,
-           estimate_CI = paste0(round(estimate, 2), " (",
-                                round(conf.low, 2), ", ",
-                                round(conf.high, 2), ")")) %>%
-    select(term, model, estimate_CI)
-}
-
-results <- bind_rows(
-  booze_terms(cox_age_tidy, "Cox Age-adjusted"),
-  booze_terms(cox_full_tidy, "Cox Full-adjusted"),
-  booze_terms(poisson_age_tidy, "Poisson Age-adjusted"),
-  booze_terms(poisson_full_tidy, "Poisson Full-adjusted")
+# Get BOOZE rows and label
+models <- list(
+  list(fit = cox_age,   Model = "Cox",     Adjustment = "Age‑adjusted"),
+  list(fit = cox_full,  Model = "Cox",     Adjustment = "Multivariable‑adjusted"),
+  list(fit = pois_age,  Model = "Poisson", Adjustment = "Age‑adjusted"),
+  list(fit = pois_full, Model = "Poisson", Adjustment = "Multivariable‑adjusted")
 )
 
-table2_clean <- results %>%
-  pivot_wider(names_from = model, values_from = estimate_CI)
+table2 <- map_dfr(models, ~
+  tidy(.x$fit, exponentiate = TRUE, conf.int = TRUE) %>%
+    filter(term == "BOOZE") %>%
+    transmute( Model = .x$Model,
+      Adjustment = .x$Adjustment,
+      Estimate = estimate,
+      Lower_CI = conf.low,
+      Upper_CI = conf.high,
+      p.value)
+)
+
+# Get table
+kable(table2, digits = 3, col.names = c("Model", "Adjustment", "HR/IRR", "Lower 95% CI", "Upper 95% CI", "p-value"),
+  caption   = "Table 2. Age-adjusted and multivariable-adjusted BOOZE associations")
+
 ```
 
 ```{r}
