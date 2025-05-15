@@ -144,83 +144,43 @@ cox.zph(cox)
 plot(cox.zph(cox))
 
 #Product term with SEX Cox regression
-##Categorical BOOZE
-cox_product <- coxph(Surv(FU, DEATH) ~ as.factor(BOOZE_q)*SEX + AGEYRS +
-               as.factor(RACE) + as.factor(EDUC_CAT) + as.factor(MARRY) + BMI + 
-               AVGSMK + as.factor(SIZE_CAT), data = d, ties = "efron")
-summary(cox_product)
-cox.zph(cox_product)
-plot(cox.zph(cox_product))
+d <- d %>%
+  mutate(sex_f = factor(SEX,
+                        levels = c(1, 2),
+                        labels = c("Male", "Female")))
 
-##Continuous BOOZE
-cox_product1 <- coxph(Surv(FU, DEATH) ~ BOOZE*SEX + AGEYRS +
-               as.factor(RACE) + as.factor(EDUC_CAT) + as.factor(MARRY) + BMI + 
-               AVGSMK + as.factor(SIZE_CAT), data = d, ties = "efron")
-summary(cox_product)
-cox.zph(cox_product1)
-plot(cox.zph(cox_product))
+##Primary interaction model (for EMM test)
+cox_int <- coxph(Surv(FU, DEATH) ~ BOOZE * sex_f + AGEYRS + factor(RACE) + 
+                   factor(EDUC_CAT) + factor(MARRY) + BMI + AVGSMK + 
+                   factor(SIZE_CAT), data = d, ties = 'efron')
+summary(cox_int)
+anova(cox_int)
+cox.zph(cox_int)
 
-#Stratified model by SEX
-##Categorical BOOZE
-cox_strata_cat <- coxph(Surv(FU, DEATH) ~ as.factor(BOOZE_q) + AGEYRS + as.factor(RACE) + 
-                   as.factor(EDUC_CAT) + as.factor(MARRY) + BMI + 
-                   AVGSMK + as.factor(SIZE_CAT) + strata(SEX), data = d, ties = 'efron')
-summary(cox_strata_cat)
-cox.zph(cox_strata_cat)
-plot(cox.zph(cox_strata_cat))
+##Common BOOZE slope, separate baselines by sex
+cox_strata_sex <- coxph(Surv(FU, DEATH) ~ BOOZE + AGEYRS + factor(RACE) + factor(EDUC_CAT) +
+                          factor(MARRY) + BMI + AVGSMK + factor(SIZE_CAT) + strata(sex_f), data = d, ties = 'efron')
 
-cox_strata_cat1 <- coxph(Surv(FU, DEATH) ~ strata(BOOZE_q, SEX) + AGEYRS + as.factor(RACE) + 
-                   as.factor(EDUC_CAT) + as.factor(MARRY) + BMI + 
-                   AVGSMK + as.factor(SIZE_CAT), data = d, ties = 'efron')
-summary(cox_strata_cat1)
-cox.zph(cox_strata_cat1)
-plot(cox.zph(cox_strata_cat1))
+summary(cox_strata_sex)
+cox.zph(cox_strata_sex)
 
-##Continuous BOOZE
-cox_strata_lin <- coxph(Surv(FU, DEATH) ~ BOOZE + strata(SEX) + AGEYRS + as.factor(RACE) + 
-                   as.factor(EDUC_CAT) + as.factor(MARRY) + BMI + 
-                   AVGSMK + as.factor(SIZE_CAT), data = d, ties = 'efron')
-summary(cox_strata_lin)
-cox.zph(cox_strata_lin)
-plot(cox.zph(cox_strata_lin))
+##Separate sex-specific models  (for Table 3)
+cox_men <- coxph(Surv(FU, DEATH) ~ BOOZE + AGEYRS + factor(RACE) + factor(EDUC_CAT)+ factor(MARRY) + 
+    BMI + AVGSMK + factor(SIZE_CAT), data = d, subset = (sex_f == "Male"), ties = 'efron')
 
-cox_strata_lin1 <- coxph(Surv(FU, DEATH) ~ strata(BOOZE, SEX) + AGEYRS + as.factor(RACE) + 
-                   as.factor(EDUC_CAT) + as.factor(MARRY) + BMI + 
-                   AVGSMK + as.factor(SIZE_CAT), data = d, ties = 'efron')
-summary(cox_strata_lin1)
-cox.zph(cox_strata_lin1)
-plot(cox.zph(cox_strata_lin1))
+cox_women <- coxph(Surv(FU, DEATH) ~ BOOZE + AGEYRS + factor(RACE) + factor(EDUC_CAT) + 
+    factor(MARRY) + BMI + AVGSMK + factor(SIZE_CAT), data = d, subset = (sex_f == "Female"), ties = 'efron')
 
-###
-cox_men <- coxph(Surv(FU, DEATH) ~ as.factor(BOOZE_q) + 
-        AGEYRS + as.factor(RACE) +  as.factor(EDUC_CAT) + 
-                    as.factor(MARRY) + BMI + AVGSMK + as.factor(SIZE_CAT), 
-                    data = d[d$SEX == 1, ])
-summary(cox_men)
-cox.zph(cox_men)
-plot(cox.zph(cox_men))
+summary(cox_men);   cox.zph(cox_men)
+summary(cox_women); cox.zph(cox_women)
 
-cox_women <- coxph(Surv(FU, DEATH) ~ as.factor(BOOZE_q) + AGEYRS + 
-                        as.factor(RACE) + as.factor(EDUC_CAT) + as.factor(MARRY) + 
-            BMI + AVGSMK + as.factor(SIZE_CAT), data = d[d$SEX == 2, ])
-summary(cox_women)
-cox.zph(cox_women)
-plot(cox.zph(cox_women))
-
-cox_men_lin <- coxph(Surv(FU, DEATH) ~ BOOZE + 
-        AGEYRS + as.factor(RACE) +  as.factor(EDUC_CAT) + 
-                    as.factor(MARRY) + BMI + AVGSMK + as.factor(SIZE_CAT), 
-                    data = d[d$SEX == 1, ])
-summary(cox_men_lin)
-#cox.zph(cox_men_lin)
-#plot(cox.zph(cox_men_lin))
-
-cox_women_lin <- coxph(Surv(FU, DEATH) ~ BOOZE + AGEYRS +
-                        as.factor(RACE) + as.factor(EDUC_CAT) + as.factor(MARRY) + 
-            BMI + AVGSMK + as.factor(SIZE_CAT), data = d[d$SEX == 2, ])
-summary(cox_women_lin)
-#cox.zph(cox_women_lin)
-#plot(cox.zph(cox_women_lin))
+##Sensitivity model (fix PH by stratifying on BOOZE and sex)
+  ## (No BOOZE HR is provided: used only to show PH doesn’t distort results)
+cox_strata_booze_sex <- coxph(Surv(FU, DEATH) ~ AGEYRS + factor(RACE) + factor(EDUC_CAT) +
+                                factor(MARRY) + BMI + AVGSMK + factor(SIZE_CAT) +
+                                strata(BOOZE, sex_f), data = d, ties = 'efron')
+summary(cox_strata_booze_sex)
+cox.zph(cox_strata_booze_sex)
 
 #Kaplan
 fit<-survfit(Surv(FU, DEATH)~BOOZE_q, data=d)
