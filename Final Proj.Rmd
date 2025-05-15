@@ -38,7 +38,7 @@ d <- NHANES2 #%>%
 ```{r}
 #Exclude missing death 
 d <- d %>%
-  filter(!is.na(BOOZE), !is.na(DEATH), !is.na(SEX), !is.na(RACE), !is.na(GRADES), !is.na(MARRY), !is.na(AVGSMK), !is.na(SIZE), !is.na(GRADES))
+  filter(!is.na(BOOZE), !is.na(DEATH), !is.na(SEX), !is.na(RACE), !is.na(GRADES), !is.na(AVGSMK), !is.na(SIZE), !is.na(GRADES))
 
 #BMI
 d <- d %>%
@@ -206,6 +206,21 @@ cox_women <- coxph(Surv(FU, DEATH) ~ as.factor(BOOZE_q) + AGEYRS +
 summary(cox_women)
 cox.zph(cox_women)
 plot(cox.zph(cox_women))
+
+cox_men_lin <- coxph(Surv(FU, DEATH) ~ BOOZE + 
+        AGEYRS + as.factor(RACE) +  as.factor(EDUC_CAT) + 
+                    as.factor(MARRY) + BMI + AVGSMK + as.factor(SIZE_CAT), 
+                    data = d[d$SEX == 1, ])
+summary(cox_men_lin)
+#cox.zph(cox_men_lin)
+#plot(cox.zph(cox_men_lin))
+
+cox_women_lin <- coxph(Surv(FU, DEATH) ~ BOOZE + AGEYRS +
+                        as.factor(RACE) + as.factor(EDUC_CAT) + as.factor(MARRY) + 
+            BMI + AVGSMK + as.factor(SIZE_CAT), data = d[d$SEX == 2, ])
+summary(cox_women_lin)
+#cox.zph(cox_women_lin)
+#plot(cox.zph(cox_women_lin))
 
 #Kaplan
 fit<-survfit(Surv(FU, DEATH)~BOOZE_q, data=d)
