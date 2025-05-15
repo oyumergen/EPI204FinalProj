@@ -239,8 +239,8 @@ pois_full <- pois_main
 
 # Get BOOZE rows and label
 models <- list(
-  list(fit = cox_age,   Model = "Cox",     Adjustment = "Age‑adjusted"),
-  list(fit = cox_full,  Model = "Cox",     Adjustment = "Multivariable‑adjusted"),
+  list(fit = cox_age, Model = "Cox", Adjustment = "Age‑adjusted"),
+  list(fit = cox_full, Model = "Cox", Adjustment = "Multivariable‑adjusted"),
   list(fit = pois_age,  Model = "Poisson", Adjustment = "Age‑adjusted"),
   list(fit = pois_full, Model = "Poisson", Adjustment = "Multivariable‑adjusted")
 )
