@@ -75,6 +75,8 @@ catVars <- c("SEX", "RACE", "MARRY", "RECEX")
 
 #Table 1
 
+
+
 table1 <- CreateTableOne(vars = vars, 
                          data = d, 
                          strata = "BOOZE_q",  
@@ -82,6 +84,36 @@ table1 <- CreateTableOne(vars = vars,
 
 print(table1, showAllLevels = TRUE)
 
+# continous booze 
+vars <- c("AGEYRS", "SEX", "RACE", "MARRY", "BMI", "AVGSMK", "EDUC_CAT", "SIZE_CAT", "RECEX", "BOOZE")
+catVars <- c("SEX", "RACE", "MARRY", "RECEX")
+table2 <- CreateTableOne(vars = vars, 
+                         data = d, 
+                         factorVars = catVars)
+
+print(table2, showAllLevels = TRUE)
+
+# continous booze 
+vars <- c("AGEYRS", "SEX", "RACE", "MARRY", "BMI", "AVGSMK", "EDUC_CAT", "SIZE_CAT", "RECEX", "BOOZE")
+catVars <- c("SEX", "RACE", "MARRY", "RECEX")
+table2 <- CreateTableOne(vars = vars, 
+                         data = d, 
+                         factorVars = catVars)
+
+print(table2, showAllLevels = TRUE)
+
+# Load library for kable
+library(knitr)
+
+# Convert CreateTableOne output to a data frame
+table2_df <- as.data.frame(print(table2, showAllLevels = TRUE))
+
+# Use kable to format the table nicely
+kable(table2_df, 
+      digits = 3, 
+      align = "c", 
+      col.names = c("Variable", "Level", "Overall"), 
+      caption = "Table 2. Summary Statistics for Continuous and Categorical Variables")
 ```
 
 ```{r}
