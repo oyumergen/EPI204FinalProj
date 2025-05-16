@@ -274,3 +274,81 @@ tidy(cox_men, exponentiate = TRUE, conf.int = TRUE)
 tidy(cox_women, exponentiate = TRUE, conf.int = TRUE)
 tidy(cox_product)
 ```
+
+```{r}
+if (!require("forestplot")) install.packages("forestplot")
+if (!require("broom")) install.packages("broom")
+if (!require("forcats")) install.packages("forcats")
+
+library(forestplot)
+library(broom)
+library(forcats)
+
+# Summarized Cox model
+cox_summary <- broom::tidy(cox, exponentiate = TRUE, conf.int = TRUE) %>%
+  filter(term != "(Intercept)") %>%
+  mutate(term = fct_inorder(term)) 
+
+# Forest plot for categorical booze 
+forestplot(
+  labeltext = as.list(cox_summary$term), mean = cox_summary$estimate, lower = cox_summary$conf.low, upper = cox_summary$conf.high, title = "Hazard Ratios from Cox Proportional Hazards Model", xlab = "Hazard Ratio (95% CI)", zero = 1, boxsize = 0.2                         
+)
+```
+
+
+```{r}
+# Stratified Kaplan-Meier survival curves for categorical booze 
+fit_stratified <- survfit(Surv(FU, DEATH) ~ BOOZE_q + SEX, data = d)
+
+ggsurvplot(
+  fit_stratified,
+  data = d,
+  conf.int = TRUE,
+  pval = TRUE,
+  xlab = "Follow-Up Time (years)",
+  ylab = "Survival Probability",
+  title = "Stratified Kaplan-Meier Survival Curves",
+  legend.title = "Groups",
+  palette = "Set1",
+  ggtheme = theme(legend.text = element_text(size = 6),  
+                  legend.title = element_text(size = 6))  
+)
+
+# Stratified Kaplan-Meier survival curves for continous booze
+fit_continuous <- survfit(Surv(FU, DEATH) ~ BOOZE, data = d)
+
+ggsurvplot(
+  fit_continuous,
+  data = d,
+  conf.int = TRUE,
+  pval = TRUE,
+  xlab = "Follow-Up Time (years)",
+  ylab = "Survival Probability",
+  title = "Kaplan-Meier Survival Curves by Alcohol Consumption (Tertiles)",
+  legend.title = "BOOZE Tertiles",
+  palette = "Set2"
+)
+```
+
+```{r}
+# Forest plot for continous booze 
+
+cox_continuous <- coxph(Surv(FU, DEATH) ~ BOOZE + SEX + AGEYRS +
+                        as.factor(RACE) + as.factor(EDUC_CAT) + as.factor(MARRY) + BMI +
+                        AVGSMK + as.factor(SIZE_CAT) + as.factor(RECEX), data = d, ties = 'efron')
+cox_summary_continuous <- broom::tidy(cox_continuous, exponentiate = TRUE, conf.int = TRUE) %>%
+  filter(term != "(Intercept)") %>%
+  mutate(term = fct_inorder(term))  
+forestplot(
+  labeltext = as.list(cox_summary_continuous$term), 
+  mean = cox_summary_continuous$estimate,           
+  lower = cox_summary_continuous$conf.low,          
+  upper = cox_summary_continuous$conf.high,         
+  title = "Hazard Ratios from Cox Model with Continuous BOOZE",
+  xlab = "Hazard Ratio (95% CI)",
+  zero = 1,                                         
+  boxsize = 0.2                                     
+)
+```
+```
+
